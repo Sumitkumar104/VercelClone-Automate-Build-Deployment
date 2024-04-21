@@ -5,7 +5,7 @@ const { ECSClient, RunTaskCommand } = require('@aws-sdk/client-ecs') // Importin
 const { Server } = require('socket.io') // Importing Socket.IO server class.
 const Redis = require('ioredis') // Importing the Redis client library.
 const dotenv = require('dotenv') // Importing the dotenv library to read environment variables.
-dotenv.config() // Loading environment variables from the .env file.
+dotenv.config(); // Loading environment variables from the .env file.
 
 const app = express() // Creating an instance of the Express application.
 app.use(express.json()) // Adding middleware to parse JSON requests.

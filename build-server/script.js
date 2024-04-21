@@ -5,9 +5,11 @@ const fs = require('fs'); // For working with the file system
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3'); // AWS SDK for S3 (simple storage service - object storage)
 const mime = require('mime-types'); // For determining MIME types of files  ( based on file extensions  )
 const Redis = require('ioredis'); // Redis client for publishing logs
+const dotnev=require('dotenv');
+dotnev.config();
 
 // Initialize Redis client for publishing logs
-const publisher = new Redis('');
+const publisher = new Redis(process.env.REDIS_URL);
 
 // Initialize S3 client with AWS credentials and region
 const s3Client = new S3Client({
