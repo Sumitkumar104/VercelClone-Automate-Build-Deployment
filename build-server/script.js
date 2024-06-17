@@ -1,9 +1,9 @@
-// Import necessary modules
+
 const { exec } = require('child_process'); // For executing shell commands
-const path = require('path'); // For working with file paths
-const fs = require('fs'); // For working with the file system
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3'); // AWS SDK for S3 (simple storage service - object storage)
-const mime = require('mime-types'); // For determining MIME types of files  ( based on file extensions  )
+const path = require('path');
+const fs = require('fs');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const mime = require('mime-types');
 const Redis = require('ioredis'); // Redis client for publishing logs
 const dotnev=require('dotenv');
 dotnev.config();
@@ -11,7 +11,6 @@ dotnev.config();
 // Initialize Redis client for publishing logs
 const publisher = new Redis(process.env.REDIS_URL);
 
-// Initialize S3 client with AWS credentials and region
 const s3Client = new S3Client({
     region: 'ap-south-1',
     credentials: {
@@ -20,7 +19,7 @@ const s3Client = new S3Client({
     }
 });
 
-// Get the PROJECT_ID from environment variables
+
 const PROJECT_ID = process.env.PROJECT_ID;
 
 // Function to publish logs to Redis
@@ -28,10 +27,12 @@ function publishLog(log) {
     publisher.publish(`logs:${PROJECT_ID}`, JSON.stringify({ log }));
 }
 
+
+
 // Main function to execute the script
 async function init() {
     console.log('Executing script.js');
-    publishLog('Build Started...'); // Publish build start log to Redis
+    publishLog('Build Started...'); 
 
     // Define output directory path
     const outDirPath = path.join(__dirname, 'output');
@@ -42,54 +43,57 @@ async function init() {
     // Event listener for capturing standard output
     p.stdout.on('data', function (data) {
         console.log(data.toString());
-        publishLog(data.toString()); // Publish output logs to Redis
+        publishLog(data.toString()); 
     });
 
     // Event listener for capturing errors
     p.stderr.on('data', function (data) {
         console.log('Error', data.toString());
-        publishLog(`error: ${data.toString()}`); // Publish error logs to Redis
+        publishLog(`error: ${data.toString()}`);
     });
 
     // Event listener for the completion of the build process
     p.on('close', async function () {
         console.log('Build Complete');
-        publishLog('Build Complete'); // Publish build completion log to Redis
+        publishLog('Build Complete');
 
         // Define path to the distribution folder
-        const distFolderPath = path.join(__dirname, 'output', 'dist');       // Path to the dist folder in the output directory
+        const distFolderPath = path.join(__dirname, 'output', 'dist');
 
         // Get the contents of the distribution folder recursively
-        const distFolderContents = fs.readdirSync(distFolderPath, { recursive: true });     // Get the contents of the dist folder
+        const distFolderContents = fs.readdirSync(distFolderPath, { recursive: true });
 
-        publishLog('Starting to upload'); // Publish upload start log to Redis
+
+// -----------------------------------------------------------------------------------------------------------
+        // Upload all content of build folder in S3 storage service 
+        publishLog('Starting to upload');
 
         // Iterate through each file in the distribution folder
         for (const file of distFolderContents) {
-            const filePath = path.join(distFolderPath, file);                 // Get the full path of the file
+            const filePath = path.join(distFolderPath, file);           
 
             // Skip directories
             if (fs.lstatSync(filePath).isDirectory()) continue;          // the fs module's lstatSync method synchronously to get the file status information for the file specified by filePath.
 
             console.log('uploading', filePath);
-            publishLog(`uploading ${file}`); // Publish upload progress log to Redis
+            publishLog(`uploading ${file}`); 
 
             // Create a PutObjectCommand to upload the file to S3
             const command = new PutObjectCommand({
-                Bucket: 'sumit104vercelclone', // Specify the S3 bucket name
-                Key: `__outputs/${PROJECT_ID}/${file}`, // Specify the key under which to store the object in the bucket
-                Body: fs.createReadStream(filePath), // Readable stream of the file content
-                ContentType: mime.lookup(filePath) // Determine MIME type of the file
+                Bucket: 'sumit104vercelclone',
+                Key: `__outputs/${PROJECT_ID}/${file}`,
+                Body: fs.createReadStream(filePath),
+                ContentType: mime.lookup(filePath) 
             });
 
             // Send the PutObjectCommand to upload the file to S3
             await s3Client.send(command);
 
-            publishLog(`uploaded ${file}`); // Publish upload completion log to Redis
+            publishLog(`uploaded ${file}`);
             console.log('uploaded', filePath);
         }
 
-        publishLog('Done'); // Publish upload completion log to Redis
+        publishLog('Done');
         console.log('Done...');
     });
 }
