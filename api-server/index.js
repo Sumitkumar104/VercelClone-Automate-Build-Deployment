@@ -11,7 +11,7 @@ const app = express()
 app.use(express.json())
 const PORT = 9000
 
-const subscriber = new Redis('rediss://default:AVNS_DVmmSQre4_4XiSA88BD@redis-207e1398-vercel-clone-1234.d.aivencloud.com:23987')
+const subscriber = new Redis('avion redis server link')
 
 const io = new Server({ cors: '*' })
 
