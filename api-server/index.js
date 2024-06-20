@@ -5,13 +5,15 @@ const { ECSClient, RunTaskCommand } = require('@aws-sdk/client-ecs')
 const { Server } = require('socket.io') 
 const Redis = require('ioredis')
 const dotenv = require('dotenv')
+const cors = require('cors')
 dotenv.config();
 
 const app = express() 
 app.use(express.json())
+cors({ origin: '*' });
 const PORT = 9000
 
-const subscriber = new Redis('avion redis server link')
+const subscriber = new Redis(process.env.REDIS_URL);
 
 const io = new Server({ cors: '*' })
 
