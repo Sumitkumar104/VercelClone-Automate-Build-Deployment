@@ -1,0 +1,37 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum deploymentStatus{
+  NOT_STARTED
+  QUEUED
+  IN_PROGRESS
+  FAILED
+  SUCCESS
+}
+model Project {
+  id           String       @id @default(uuid())
+  name         String
+  gitURL       String       @map("git_url")
+  subDomain    String       @map("sub_domain")
+  customDomain String?      @map("custom_domain")
+  Deployment   Deployment[]             // project can have multiple deployments
+}
+
+model Deployment {
+  id        String  @id @default(uuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+  status    deploymentStatus @default(NOT_STARTED)
+}

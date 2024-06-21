@@ -3,18 +3,19 @@ const express = require('express')
 const { generateSlug } = require('random-word-slugs') // used to generate a random number used for project id.
 const { ECSClient, RunTaskCommand } = require('@aws-sdk/client-ecs')
 const { Server } = require('socket.io') 
+const { PrismaClient } = require('@prisma/client');
 const Redis = require('ioredis')
 const dotenv = require('dotenv')
 const cors = require('cors')
-dotenv.config();
+
 
 const app = express() 
 app.use(express.json())
+dotenv.config();
 cors({ origin: '*' });
 const PORT = 9000
 
 const subscriber = new Redis(process.env.REDIS_URL);
-
 const io = new Server({ cors: '*' })
 
 io.on('connection', socket => { 
@@ -23,10 +24,10 @@ io.on('connection', socket => {
         socket.emit('message', `Joined ${channel}`)
     })
 })
-
-
 // our socket server is listen at 9002 port 
 io.listen(9002, () => console.log('Socket Server 9002'))
+
+const Prisma = new PrismaClient() // Prisma client to interact with the database.
 
 const ecsClient = new ECSClient({
     region: 'ap-south-1',
@@ -43,9 +44,10 @@ const config = {
 }
 
 
+
+
 //slug is basicllly a unique id for the project we use it because we not use any database to store the project info,
 // our API will take the gitHub url from the API and run the container in AWS ECS with the image from the gitHub url
-
 app.post('/project', async (req, res) => {
     const { gitURL, slug } = req.body
     const projectSlug = slug ? slug : generateSlug()
@@ -78,10 +80,21 @@ app.post('/project', async (req, res) => {
 
     await ecsClient.send(command);
 
+    // make entry in the database for the project
+    await Prisma.project.create({
+    data:{
+     name: projectSlug,
+     gitURL: gitURL,
+     subDomain:`${projectSlug}.localhost:8080`,
+    }})
+
     // This 8080 is port at which our s3-reverse-proxy server run
     return res.json({ status: 'queued', data: { projectSlug, url: `http://${projectSlug}.localhost:8080` } })
     // basiclly it return a random URL where the container is running the image from the gitHub url (url where our project is deploy)
 })
+
+
+
 
 // Function to initialize Redis subscription for logs.
 async function initRedisSubscribe() { 
@@ -92,7 +105,9 @@ async function initRedisSubscribe() {
     })
 }
 
-initRedisSubscribe() // Initializing Redis subscription for logs.
 
+
+
+initRedisSubscribe() // Initializing Redis subscription for logs.
 app.listen(PORT, () => console.log(`API Server Running..${PORT}`))
 
