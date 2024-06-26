@@ -23,7 +23,7 @@ At this point following services would be up and running:
 
 ### SetUp Database
 
-3. Start a PostgreSQL database using Docker:
+1. Start a PostgreSQL database using Docker:
 
    ```bash
    docker run -d \
@@ -41,14 +41,14 @@ At this point following services would be up and running:
    DATABASE_URL=postgresql://myuser:mypassword@localhost:5432/mydatabase?schema=public
    ```
 
-4. Create a `.env` file based on the `.env.example` file and configure the `DATABASE_URL` with your postgreSQL connection string.
-5. Install dependencies:
+2. Create a `.env` file based on the `.env.example` file and configure the `DATABASE_URL` with your postgreSQL connection string.
+3. Install dependencies:
 
    ```bash
    npm install
    ```
 
-6. Run database migrations:
+4. Run database migrations:
 
    ```bash
    npm run prisma:migrate
@@ -59,4 +59,4 @@ At this point following services would be up and running:
 
 ### Architecture
 
-![Vercel Clone Architecture](https://i.imgur.com/r7QUXqZ.png)
+![Architecture](https://i.imgur.com/r7QUXqZ.png)
